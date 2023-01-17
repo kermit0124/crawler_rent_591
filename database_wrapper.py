@@ -37,6 +37,34 @@ class Database_wrapper(object):
         """ Try to create the table """
         RentItem.metadata.create_all(self.engine)
     
+    def compareIsIdentical(self,rentItem1: RentItem,rentItem2: RentItem):
+        assert type(rentItem1) == type(rentItem2)
+        check_res = True
+        check_res = False if (rentItem1.title != rentItem2.title) else check_res
+        check_res = False if (rentItem1.msg != rentItem2.msg) else check_res
+        check_res = False if (rentItem1.price != rentItem2.price) else check_res
+        return check_res
+
+    def updateOrAppend(self,rentItem_lt: list[RentItem]):
+        assert type(rentItem_lt) == type([])
+        updateRentItem_new_lt = []
+        updateRentItem_updated_lt = []
+        for _updateRentItem_web in rentItem_lt:
+            qRes = self.queryRentItem(RentItem.url == _updateRentItem_web.url)
+            if (self.queryResultLen>0):
+                for _updateRentItem_qRes in qRes:
+                    if (not(self.compareIsIdentical(_updateRentItem_web,_updateRentItem_qRes))):
+                        self.updateQueryResultByRentItem(_updateRentItem_web)
+                        updateRentItem_updated_lt.append(_updateRentItem_web)
+            else:
+                updateRentItem_new_lt.append(_updateRentItem_web)
+        
+        if (updateRentItem_new_lt != []):
+            self.addNewRow(updateRentItem_new_lt)
+
+        self.updateRentItem_new_lt = updateRentItem_new_lt
+        self.updateRentItem_updated_lt = updateRentItem_updated_lt
+
     def addNewRow(self,rentItem_or_list: RentItem|list):
         if (type(rentItem_or_list) != type([])):
             rentItem_or_list = [rentItem_or_list]
@@ -44,6 +72,14 @@ class Database_wrapper(object):
         self.session.add_all(rentItem_or_list)
         self.session.commit()
     
+    def updateQueryResultByRentItem(self,rentItem: RentItem):
+        update_dict = {}
+        update_dict['title'] = rentItem.title
+        update_dict['msg'] = rentItem.msg
+        update_dict['price'] = rentItem.price
+        update_dict['price_str'] = rentItem.price_str
+        self.updateQueryResult(update_dict)
+
     def updateQueryResult(self,update_dict):
         self.queryResult.update(update_dict)
         self.session.commit()
@@ -81,8 +117,8 @@ class Database_wrapper(object):
         t2.msg = '123333'
         self.addNewRow([t,t2])
 def test():
-    dbOp = Database_wrapper()
-    dbOp.testFlow()
+    # dbOp = Database_wrapper()
+    # dbOp.testFlow()
     print('finish')
 
 if __name__ == '__main__':

@@ -3,3 +3,5 @@ LICENSE.chromedriver
 test.py
 __pycache__
 test.db
+db.db
+.vscode
