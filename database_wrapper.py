@@ -22,6 +22,21 @@ class RentItem(declarative_base()):
     url = Column('url', String)
     update_date = Column('update_date', DATETIME)
 
+
+class DiffField(object):
+    def __init__(self,fieldName,beforeValue,afterValue) -> None:
+        self.fieldName = fieldName
+        self.beforeValue = beforeValue 
+        self.afterValue = afterValue
+
+class DiffContainer(object):
+    def __init__(self) -> None:
+        self.rentItem = None
+        self.diffField_lt = []
+    
+    def appendDiffField(self,diffField: DiffField):
+        self.diffField_lt.append(diffField)
+
 class Database_wrapper(object):
     def __init__(self) -> None:
         self.engine = create_engine(f'sqlite:///{DB_FILE}', echo=True) # 建立連線
@@ -37,25 +52,58 @@ class Database_wrapper(object):
         """ Try to create the table """
         RentItem.metadata.create_all(self.engine)
     
-    def compareIsIdentical(self,rentItem1: RentItem,rentItem2: RentItem):
-        assert type(rentItem1) == type(rentItem2)
+    def compareIsIdentical(self,rentItemAfter: RentItem,rentItemBefore: RentItem):
+        assert type(rentItemAfter) == type(rentItemBefore)
         check_res = True
-        check_res = False if (rentItem1.title != rentItem2.title) else check_res
-        check_res = False if (rentItem1.msg != rentItem2.msg) else check_res
-        check_res = False if (rentItem1.price != rentItem2.price) else check_res
+        # check_res = False if (rentItemAfter.title != rentItemBefore.title) else check_res
+        # check_res = False if (rentItemAfter.msg != rentItemBefore.msg) else check_res
+        # check_res = False if (rentItemAfter.price != rentItemBefore.price) else check_res
+
+        _LT = ['title','msg','price']
+        self.diffField_lt = []
+        DIFF_DICT_KEY__BEFORE = 'before'
+        DIFF_DICT_KEY__AFTER = 'after'
+        DIFF_DICT_KEY__RENTITEM = 'RentItem'
+        fieldDiff_dict = {}
+        self.diffContiner = DiffContainer()
+        self.diffContiner.rentItem = rentItemAfter
+        for _fieldName in _LT:
+            value1 = getattr(rentItemAfter,_fieldName)
+            value2 = getattr(rentItemBefore,_fieldName)
+            if (value1 != value2):
+                diff_dict = {}
+                diff_dict[DIFF_DICT_KEY__BEFORE] = value2
+                diff_dict[DIFF_DICT_KEY__AFTER] = value1
+                diff_dict[DIFF_DICT_KEY__RENTITEM] = rentItemAfter
+                fieldDiff_dict[_fieldName] = diff_dict
+                self.fieldDiff_dict = fieldDiff_dict
+
+                diffField = DiffField(_fieldName,value2,value1)
+                check_res = False
+                self.diffField_lt.append(diffField)
+
+                diffField.afterValue = value1
+                diffField.beforeValue = value2
+                diffField.fieldName = _fieldName
+                self.diffContiner.appendDiffField(diffField)
+
         return check_res
 
     def updateOrAppend(self,rentItem_lt: list[RentItem]):
         assert type(rentItem_lt) == type([])
         updateRentItem_new_lt = []
-        updateRentItem_updated_lt = []
+        self.updateDiffContiner_lt = []
+        # updateRentItem_updated_diffField_lt = []
+        updateRentItem_updated_diffFieldDict_lt = []
         for _updateRentItem_web in rentItem_lt:
             qRes = self.queryRentItem(RentItem.url == _updateRentItem_web.url)
             if (self.queryResultLen>0):
                 for _updateRentItem_qRes in qRes:
                     if (not(self.compareIsIdentical(_updateRentItem_web,_updateRentItem_qRes))):
+                        # updateRentItem_updated_diffField_lt.append(self.diffField_lt)
+                        updateRentItem_updated_diffFieldDict_lt.append(self.fieldDiff_dict)
+                        self.updateDiffContiner_lt.append(self.diffContiner)
                         self.updateQueryResultByRentItem(_updateRentItem_web)
-                        updateRentItem_updated_lt.append(_updateRentItem_web)
             else:
                 updateRentItem_new_lt.append(_updateRentItem_web)
         
@@ -63,7 +111,8 @@ class Database_wrapper(object):
             self.addNewRow(updateRentItem_new_lt)
 
         self.updateRentItem_new_lt = updateRentItem_new_lt
-        self.updateRentItem_updated_lt = updateRentItem_updated_lt
+        self.updateRentItem_updated_diffFieldDict_lt = updateRentItem_updated_diffFieldDict_lt
+        # self.updateRentItem_updated_diffField_lt = updateRentItem_updated_diffField_lt
 
     def addNewRow(self,rentItem_or_list: RentItem|list):
         if (type(rentItem_or_list) != type([])):

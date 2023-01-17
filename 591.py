@@ -41,9 +41,10 @@ class FlowCtrl(object):
             print(f'Page:{pageCnt} - got items:{len(eles)}')
             pageCnt += 1
         parser591.printItemList()
-        self.writeToDb()
+        self.writeToDatabase()
+        True
 
-    def writeToDb(self):
+    def writeToDatabase(self):
         rentItemSql_lt = []
         for rentItem591 in parser591.item_lt:
             rentItemSql = RentItem()
@@ -56,7 +57,6 @@ class FlowCtrl(object):
             rentItemSql_lt.append(rentItemSql)
 
         dbWrapper.updateOrAppend(rentItemSql_lt)
-        # dbWrapper.addNewRow(rentItemSql_lt)
 
 parser591 = Parser591()
 dbWrapper = Database_wrapper()
