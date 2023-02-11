@@ -32,7 +32,7 @@ class DiffField(object):
 class DiffContainer(object):
     def __init__(self) -> None:
         self.rentItem = None
-        self.diffField_lt = []
+        self.diffField_lt = [] # type: list[DiffField]
     
     def appendDiffField(self,diffField: DiffField):
         self.diffField_lt.append(diffField)
@@ -65,8 +65,8 @@ class Database_wrapper(object):
         DIFF_DICT_KEY__AFTER = 'after'
         DIFF_DICT_KEY__RENTITEM = 'RentItem'
         fieldDiff_dict = {}
-        self.diffContiner = DiffContainer()
-        self.diffContiner.rentItem = rentItemAfter
+        self.diffContainer = DiffContainer()
+        self.diffContainer.rentItem = rentItemAfter
         for _fieldName in _LT:
             value1 = getattr(rentItemAfter,_fieldName)
             value2 = getattr(rentItemBefore,_fieldName)
@@ -85,14 +85,14 @@ class Database_wrapper(object):
                 diffField.afterValue = value1
                 diffField.beforeValue = value2
                 diffField.fieldName = _fieldName
-                self.diffContiner.appendDiffField(diffField)
+                self.diffContainer.appendDiffField(diffField)
 
         return check_res
 
     def updateOrAppend(self,rentItem_lt: list[RentItem]):
         assert type(rentItem_lt) == type([])
         updateRentItem_new_lt = []
-        self.updateDiffContiner_lt = []
+        self.updateDiffContainer_lt = [] # type: list[DiffContainer]
         # updateRentItem_updated_diffField_lt = []
         updateRentItem_updated_diffFieldDict_lt = []
         for _updateRentItem_web in rentItem_lt:
@@ -102,7 +102,7 @@ class Database_wrapper(object):
                     if (not(self.compareIsIdentical(_updateRentItem_web,_updateRentItem_qRes))):
                         # updateRentItem_updated_diffField_lt.append(self.diffField_lt)
                         updateRentItem_updated_diffFieldDict_lt.append(self.fieldDiff_dict)
-                        self.updateDiffContiner_lt.append(self.diffContiner)
+                        self.updateDiffContainer_lt.append(self.diffContainer)
                         self.updateQueryResultByRentItem(_updateRentItem_web)
             else:
                 updateRentItem_new_lt.append(_updateRentItem_web)

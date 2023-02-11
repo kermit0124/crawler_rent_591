@@ -4,12 +4,16 @@ from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
 from parser_591 import Parser591,Item591
-from database_wrapper import Database_wrapper,RentItem
+from database_wrapper import Database_wrapper,RentItem,DiffContainer,DiffField
+from google_chat_bot import GoogleChatBot
+import asyncio
 
-START_URL = 'https://rent.591.com.tw/?kind=1&region=1&section=11,4,7&searchtype=1&rentprice=,30000&multiRoom=2,3,4&showMore=1&order=money&orderType=asc&multiNotice=not_cover&keywords=%E6%B0%B8%E5%90%89'
+# START_URL = 'https://rent.591.com.tw/?kind=1&region=1&section=11,4,7&searchtype=1&rentprice=,30000&multiRoom=2,3,4&showMore=1&order=money&orderType=asc&multiNotice=not_cover&keywords=%E6%B0%B8%E5%90%89'
 # START_URL = 'https://rent.591.com.tw/?kind=1&region=1&section=11,4,7&searchtype=1&rentprice=,30000&multiRoom=2,3,4&showMore=1&order=money&orderType=asc&multiNotice=not_cover&firstRow=0&totalRows=193'
-# START_URL = 'https://rent.591.com.tw/?keywords=%E4%BF%A1%E7%BE%A9%E8%B7%AF%E5%85%AD%E6%AE%B5&order=money&orderType=asc' # test: 2pages
+START_URL = 'https://rent.591.com.tw/?keywords=%E4%BF%A1%E7%BE%A9%E8%B7%AF%E5%85%AD%E6%AE%B5&order=money&orderType=asc' # test: 2pages
 WAIT_LOAD_TIME_SEC = 1
+
+GOOGLE_CHAT_WEBHOOK_URL = 'https://chat.googleapis.com/v1/spaces/AAAAnro4QYI/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=G1APOmf9POyYF8MqSqZIHVxjk61Mct6Q9FPZUUTMddw%3D'
 
 
 class FlowCtrl(object):
@@ -42,7 +46,32 @@ class FlowCtrl(object):
             pageCnt += 1
         parser591.printItemList()
         self.writeToDatabase()
+        self.printUpdated()
         True
+
+    def genFormatedDiffContainer(self,dc:DiffContainer):
+        rentItem = dc.rentItem
+        rt = f"=============================================================\n\
+Title: {rentItem.title} \n\
+Price: {rentItem.price} \n\
+Messenger: {rentItem.msg} \n\
+URL: {rentItem.url}"
+
+        rt += '\n----------- Update -----------\n'
+        for diffField in dc.diffField_lt:
+            rt += f'{diffField.fieldName}: {diffField.beforeValue} -> {diffField.afterValue}\n'
+            
+        return rt
+
+    def printUpdated(self):
+        chatText = ''
+        for uc in dbWrapper.updateDiffContainer_lt:
+            _text = self.genFormatedDiffContainer(uc)
+            chatText+= _text +'\n\n'
+        
+        print(chatText)
+
+        asyncio.run(googleChatBot.post(chatText))
 
     def writeToDatabase(self):
         rentItemSql_lt = []
@@ -66,6 +95,8 @@ options.add_argument("--disable-notifications")
 
 chrome = webdriver.Chrome('./chromedriver', chrome_options=options)
 chrome.get(START_URL)
+
+googleChatBot = GoogleChatBot(GOOGLE_CHAT_WEBHOOK_URL)
 
 fc = FlowCtrl()
 fc.flow1()
