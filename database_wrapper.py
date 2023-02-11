@@ -20,7 +20,7 @@ class RentItem(declarative_base()):
     price = Column('price', Integer)
     price_str = Column('price_str', String)
     url = Column('url', String)
-    update_date = Column('update_date', DATETIME)
+    update_date = Column('update_date', Integer)
 
 
 class DiffField(object):
@@ -103,7 +103,8 @@ class Database_wrapper(object):
                         # updateRentItem_updated_diffField_lt.append(self.diffField_lt)
                         updateRentItem_updated_diffFieldDict_lt.append(self.fieldDiff_dict)
                         self.updateDiffContainer_lt.append(self.diffContainer)
-                        self.updateQueryResultByRentItem(_updateRentItem_web)
+                    
+                    self.updateQueryResultByRentItem(_updateRentItem_web)
             else:
                 updateRentItem_new_lt.append(_updateRentItem_web)
         
@@ -127,6 +128,7 @@ class Database_wrapper(object):
         update_dict['msg'] = rentItem.msg
         update_dict['price'] = rentItem.price
         update_dict['price_str'] = rentItem.price_str
+        update_dict['update_date'] = rentItem.update_date
         self.updateQueryResult(update_dict)
 
     def updateQueryResult(self,update_dict):
