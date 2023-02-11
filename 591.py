@@ -11,6 +11,33 @@ import asyncio
 # START_URL = 'https://rent.591.com.tw/?kind=1&region=1&section=11,4,7&searchtype=1&rentprice=,30000&multiRoom=2,3,4&showMore=1&order=money&orderType=asc&multiNotice=not_cover&keywords=%E6%B0%B8%E5%90%89'
 # START_URL = 'https://rent.591.com.tw/?kind=1&region=1&section=11,4,7&searchtype=1&rentprice=,30000&multiRoom=2,3,4&showMore=1&order=money&orderType=asc&multiNotice=not_cover&firstRow=0&totalRows=193'
 START_URL = 'https://rent.591.com.tw/?keywords=%E4%BF%A1%E7%BE%A9%E8%B7%AF%E5%85%AD%E6%AE%B5&order=money&orderType=asc' # test: 2pages
+
+# START_URL_LT = [
+#     # 南港松山信義 無關鍵字 <30000
+#     'https://rent.591.com.tw/?kind=1&region=1&section=11,4,7&searchtype=1&rentprice=,30000&multiRoom=2,3,4&showMore=1&order=money&orderType=asc&multiNotice=not_cover&firstRow=0&totalRows=193'
+
+#     # 關鍵字 永吉
+#     ,'https://rent.591.com.tw/?kind=1&region=1&section=11,4,7&searchtype=1&rentprice=,30000&multiRoom=2,3,4&showMore=1&order=money&orderType=asc&multiNotice=not_cover&keywords=%E6%B0%B8%E5%90%89'
+
+#     # Keyword: 社宅
+#     ,'https://rent.591.com.tw/?rentprice=,29000&region=1&showMore=1&order=money&orderType=asc&keywords=%E7%A4%BE%E5%AE%85&section=4,11,7,5&searchtype=1&other=balcony_1&kind=1'
+
+#     # Keyword: 社會
+#     ,'https://rent.591.com.tw/?rentprice=,29000&region=1&showMore=1&order=posttime&orderType=desc&keywords=%E7%A4%BE%E6%9C%83&section=4,11,7,5&searchtype=1&other=balcony_1&kind=1'
+# ]
+
+
+START_URL_LT = [
+    # 關鍵字 永吉
+    'https://rent.591.com.tw/?kind=1&region=1&section=11,4,7&searchtype=1&rentprice=,30000&multiRoom=2,3,4&showMore=1&order=money&orderType=asc&multiNotice=not_cover&keywords=%E6%B0%B8%E5%90%89'
+
+    # Keyword: 社宅
+    ,'https://rent.591.com.tw/?rentprice=,29000&region=1&showMore=1&order=money&orderType=asc&keywords=%E7%A4%BE%E5%AE%85&section=4,11,7,5&searchtype=1&other=balcony_1&kind=1'
+
+    # Keyword: 社會
+    ,'https://rent.591.com.tw/?rentprice=,29000&region=1&showMore=1&order=posttime&orderType=desc&keywords=%E7%A4%BE%E6%9C%83&section=4,11,7,5&searchtype=1&other=balcony_1&kind=1'
+]
+
 WAIT_LOAD_TIME_SEC = 2
 
 
@@ -20,9 +47,15 @@ GOOGLE_CHAT_WEBHOOK_URL = 'https://chat.googleapis.com/v1/spaces/AAAAnro4QYI/mes
 class FlowCtrl(object):
     def __init__(self) -> None:
         pass
+
+    def start(self):
+        for startUrl in START_URL_LT:
+            chrome.get(startUrl)
+            self.getData(chrome)
+        self.writeToDatabase()
+        self.printUpdated()
     
-    def flow1(self):
-        driver = chrome
+    def getData(self,driver):
         newPage = True
         pageCnt = 0
         while(newPage):
@@ -48,10 +81,7 @@ class FlowCtrl(object):
 
             print(f'Page:{pageCnt} - got items:{len(eles)}')
             pageCnt += 1
-        parser591.printItemList()
-        self.writeToDatabase()
-        self.printUpdated()
-        True
+        # parser591.printItemList()
 
     def genFormatedDiffContainer(self,dc:DiffContainer):
         rentItem = dc.rentItem
@@ -78,7 +108,7 @@ URL: {rentItem.url}"
                 chatText += '####################################################################\n'*3
                 chatText += '# 新上架物件 #\n'
                 chatText += '####################################################################\n'*3
-                chatText+= f"=============================================================\n\
+            chatText+= f"\n=============================================================\n\
 Title: {newContainer.title} \n\
 Price: {newContainer.price} \n\
 Messenger: {newContainer.msg} \n\
@@ -109,9 +139,8 @@ options = Options()
 options.add_argument("--disable-notifications")
 
 chrome = webdriver.Chrome('./chromedriver', chrome_options=options)
-chrome.get(START_URL)
 
 googleChatBot = GoogleChatBot(GOOGLE_CHAT_WEBHOOK_URL)
 
 fc = FlowCtrl()
-fc.flow1()
+fc.start()

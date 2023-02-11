@@ -47,6 +47,8 @@ class Database_wrapper(object):
         self.queryResult = self.session.query()
         self.queryResultLen = 0
         self.queryResultList = []
+        self.updateRentItem_new_lt = []
+        self.updateDiffContainer_lt = [] # type: list[DiffContainer]
     
     def __initDb_rentTable(self):
         """ Try to create the table """
@@ -91,28 +93,25 @@ class Database_wrapper(object):
 
     def updateOrAppend(self,rentItem_lt: list[RentItem]):
         assert type(rentItem_lt) == type([])
-        updateRentItem_new_lt = []
-        self.updateDiffContainer_lt = [] # type: list[DiffContainer]
         # updateRentItem_updated_diffField_lt = []
-        updateRentItem_updated_diffFieldDict_lt = []
+        # updateRentItem_updated_diffFieldDict_lt = []
         for _updateRentItem_web in rentItem_lt:
             qRes = self.queryRentItem(RentItem.url == _updateRentItem_web.url)
             if (self.queryResultLen>0):
                 for _updateRentItem_qRes in qRes:
                     if (not(self.compareIsIdentical(_updateRentItem_web,_updateRentItem_qRes))):
                         # updateRentItem_updated_diffField_lt.append(self.diffField_lt)
-                        updateRentItem_updated_diffFieldDict_lt.append(self.fieldDiff_dict)
+                        # updateRentItem_updated_diffFieldDict_lt.append(self.fieldDiff_dict)
                         self.updateDiffContainer_lt.append(self.diffContainer)
                     
                     self.updateQueryResultByRentItem(_updateRentItem_web)
             else:
-                updateRentItem_new_lt.append(_updateRentItem_web)
+                self.updateRentItem_new_lt.append(_updateRentItem_web)
         
-        if (updateRentItem_new_lt != []):
-            self.addNewRow(updateRentItem_new_lt)
+        if (self.updateRentItem_new_lt != []):
+            self.addNewRow(self.updateRentItem_new_lt)
 
-        self.updateRentItem_new_lt = updateRentItem_new_lt
-        self.updateRentItem_updated_diffFieldDict_lt = updateRentItem_updated_diffFieldDict_lt
+        # self.updateRentItem_updated_diffFieldDict_lt = updateRentItem_updated_diffFieldDict_lt
         # self.updateRentItem_updated_diffField_lt = updateRentItem_updated_diffField_lt
 
     def addNewRow(self,rentItem_or_list: RentItem|list):
