@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
+import datetime
 from parser_591 import Parser591,Item591
 from database_wrapper import Database_wrapper,RentItem,DiffContainer,DiffField
 from google_chat_bot import GoogleChatBot
@@ -40,6 +41,7 @@ START_URL_LT = [
 
 WAIT_LOAD_TIME_SEC = 2
 
+POLLING_INTERVAL_SEC = 60*60
 
 GOOGLE_CHAT_WEBHOOK_URL = 'https://chat.googleapis.com/v1/spaces/AAAAnro4QYI/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=G1APOmf9POyYF8MqSqZIHVxjk61Mct6Q9FPZUUTMddw%3D'
 
@@ -49,12 +51,15 @@ class FlowCtrl(object):
         pass
 
     def start(self):
-        for startUrl in START_URL_LT:
-            chrome.get(startUrl)
-            self.getData(chrome)
-        self.writeToDatabase()
-        self.printUpdated()
-    
+        while (True):
+            for startUrl in START_URL_LT:
+                chrome.get(startUrl)
+                self.getData(chrome)
+            self.writeToDatabase()
+            self.printUpdated()
+
+            print(f'finish: {datetime.datetime.now()}')
+            time.sleep(POLLING_INTERVAL_SEC)
     def getData(self,driver):
         newPage = True
         pageCnt = 0
