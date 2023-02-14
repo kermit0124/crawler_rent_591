@@ -39,9 +39,17 @@ START_URL_LT = [
     ,'https://rent.591.com.tw/?rentprice=,29000&region=1&showMore=1&order=posttime&orderType=desc&keywords=%E7%A4%BE%E6%9C%83&section=4,11,7,5&searchtype=1&other=balcony_1&kind=1'
 ]
 
+# START_URL_LT = [
+#     # Keyword: 社會
+#     'https://rent.591.com.tw/?rentprice=,29000&region=1&showMore=1&order=posttime&orderType=desc&keywords=%E7%A4%BE%E6%9C%83&section=4,11,7,5&searchtype=1&other=balcony_1&kind=1'
+# ]
+
 WAIT_LOAD_TIME_SEC = 2
 
 POLLING_INTERVAL_SEC = 60*60
+
+DISABLE_GOOGLE_CHAT = True
+DISABLE_GOOGLE_CHAT = False
 
 GOOGLE_CHAT_WEBHOOK_URL = 'https://chat.googleapis.com/v1/spaces/AAAAnro4QYI/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=G1APOmf9POyYF8MqSqZIHVxjk61Mct6Q9FPZUUTMddw%3D'
 
@@ -52,6 +60,9 @@ class FlowCtrl(object):
 
     def start(self):
         while (True):
+            parser591 = Parser591()
+            dbWrapper = Database_wrapper()
+            
             for startUrl in START_URL_LT:
                 chrome.get(startUrl)
                 self.getData(chrome)
@@ -121,7 +132,8 @@ URL: {newContainer.url}"
 
         print(chatText)
 
-        asyncio.run(googleChatBot.post(chatText))
+        if (DISABLE_GOOGLE_CHAT == False):
+            asyncio.run(googleChatBot.post(chatText))
 
     def writeToDatabase(self):
         rentItemSql_lt = []
@@ -135,7 +147,7 @@ URL: {newContainer.url}"
             rentItemSql.update_date = int(time.time())
             rentItemSql_lt.append(rentItemSql)
 
-        dbWrapper.updateOrAppend(rentItemSql_lt)
+        dbWrapper.updateOrAppendList(rentItemSql_lt)
 
 parser591 = Parser591()
 dbWrapper = Database_wrapper()

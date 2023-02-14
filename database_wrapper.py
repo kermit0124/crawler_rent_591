@@ -48,6 +48,7 @@ class Database_wrapper(object):
         self.queryResultLen = 0
         self.queryResultList = []
         self.updateRentItem_new_lt = []
+        self.updateRentItem_new_dict = {}
         self.updateDiffContainer_lt = [] # type: list[DiffContainer]
     
     def __initDb_rentTable(self):
@@ -91,7 +92,8 @@ class Database_wrapper(object):
 
         return check_res
 
-    def updateOrAppend(self,rentItem_lt: list[RentItem]):
+
+    def updateOrAppendList(self,rentItem_lt: list[RentItem]):
         assert type(rentItem_lt) == type([])
         # updateRentItem_updated_diffField_lt = []
         # updateRentItem_updated_diffFieldDict_lt = []
@@ -106,8 +108,10 @@ class Database_wrapper(object):
                     
                     self.updateQueryResultByRentItem(_updateRentItem_web)
             else:
+                self.updateRentItem_new_dict[_updateRentItem_web.url] = _updateRentItem_web
                 self.updateRentItem_new_lt.append(_updateRentItem_web)
         
+        self.updateRentItem_new_lt = list(self.updateRentItem_new_dict.values())
         if (self.updateRentItem_new_lt != []):
             self.addNewRow(self.updateRentItem_new_lt)
 
@@ -145,6 +149,7 @@ class Database_wrapper(object):
             qRes = qRes.filter(alchemyFilter_or_list)
         
         self.queryResultList = []
+        self.queryResultLen = 0
         for idx, rentItem in enumerate(qRes):
             self.queryResultLen = idx+1
             self.queryResultList.append(rentItem)
